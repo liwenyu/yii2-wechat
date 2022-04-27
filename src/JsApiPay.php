@@ -5,7 +5,6 @@ namespace srun\wechat;
 use srun\wechat\WxPayApi;
 use srun\wechat\WxPayConfig;
 use srun\wechat\WxPayJsApiPay;
-
 /**
  * 
  * JSAPI支付实现类
@@ -50,7 +49,7 @@ class JsApiPay
 		if (!isset($_GET['code'])){
 			//触发微信返回code码
 			$baseUrl = urlencode('http://'.$_SERVER['HTTP_HOST'].$_SERVER['PHP_SELF'].$_SERVER['QUERY_STRING']);
-			$url = $this->__CreateOauthUrlForCode($baseUrl);
+			$url = $this->_CreateOauthUrlForCode($baseUrl);
 			Header("Location: $url");
 			exit();
 		} else {
@@ -98,7 +97,7 @@ class JsApiPay
 	 */
 	public function GetOpenidFromMp($code)
 	{
-		$url = $this->__CreateOauthUrlForOpenid($code);
+		$url = $this->_CreateOauthUrlForOpenid($code);
 		//初始化curl
 		$ch = curl_init();
 		//设置超时
@@ -108,7 +107,7 @@ class JsApiPay
 		curl_setopt($ch, CURLOPT_SSL_VERIFYHOST,FALSE);
 		curl_setopt($ch, CURLOPT_HEADER, FALSE);
 		curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-		if(WxPayConfig::CURL_PROXY_HOST != "0.0.0.0" 
+		if(WxPayConfig::CURL_PROXY_HOST != "0.0.0.0"
 			&& WxPayConfig::CURL_PROXY_PORT != 0){
 			curl_setopt($ch,CURLOPT_PROXY, WxPayConfig::CURL_PROXY_HOST);
 			curl_setopt($ch,CURLOPT_PROXYPORT, WxPayConfig::CURL_PROXY_PORT);
@@ -154,7 +153,7 @@ class JsApiPay
 	{	
 		$getData = $this->data;
 		$data = array();
-		$data["appid"] = WxPayConfig::APPID;
+		$data["appid"] = WxPayConfig::APPID();
 		$data["url"] = "http://".$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI'];
 		$time = time();
 		$data["timestamp"] = "$time";
@@ -168,7 +167,7 @@ class JsApiPay
 			"addrSign" => $addrSign,
 			"signType" => "sha1",
 			"scope" => "jsapi_address",
-			"appId" => WxPayConfig::APPID,
+			"appId" => WxPayConfig::APPID(),
 			"timeStamp" => $data["timestamp"],
 			"nonceStr" => $data["noncestr"]
 		);
@@ -183,9 +182,9 @@ class JsApiPay
 	 * 
 	 * @return 返回构造好的url
 	 */
-	private function __CreateOauthUrlForCode($redirectUrl)
+	private function _CreateOauthUrlForCode($redirectUrl)
 	{
-		$urlObj["appid"] = WxPayConfig::APPID;
+		$urlObj["appid"] = WxPayConfig::APPID();
 		$urlObj["redirect_uri"] = "$redirectUrl";
 		$urlObj["response_type"] = "code";
 		$urlObj["scope"] = "snsapi_base";
@@ -193,6 +192,17 @@ class JsApiPay
 		$bizString = $this->ToUrlParams($urlObj);
 		return "https://open.weixin.qq.com/connect/oauth2/authorize?".$bizString;
 	}
+
+    public function createOauthUrlForCode($redirectUrl)
+    {
+        $urlObj["appid"] = WxPayConfig::APPID();
+        $urlObj["redirect_uri"] = "$redirectUrl";
+        $urlObj["response_type"] = "code";
+        $urlObj["scope"] = "snsapi_base";
+        $urlObj["state"] = "STATE"."#wechat_redirect";
+        $bizString = $this->ToUrlParams($urlObj);
+        return "https://open.weixin.qq.com/connect/oauth2/authorize?".$bizString;
+    }
 	
 	/**
 	 * 
@@ -201,10 +211,10 @@ class JsApiPay
 	 * 
 	 * @return 请求的url
 	 */
-	private function __CreateOauthUrlForOpenid($code)
+	private function _CreateOauthUrlForOpenid($code)
 	{
-		$urlObj["appid"] = WxPayConfig::APPID;
-		$urlObj["secret"] = WxPayConfig::APPSECRET;
+		$urlObj["appid"] = WxPayConfig::APPID();
+		$urlObj["secret"] = WxPayConfig::APPSECRET();
 		$urlObj["code"] = $code;
 		$urlObj["grant_type"] = "authorization_code";
 		$bizString = $this->ToUrlParams($urlObj);
